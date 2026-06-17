@@ -1,25 +1,107 @@
-# CODING AGENTS: READ THIS FIRST
+# 苏小T · AI 导览（苏州高新有轨电车）
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+一个面向有轨电车乘客的 AI 出行导览应用 + 运营管理后台。
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+- **手机端（C 端，19 个页面）**：智能问答、实时到站、文旅推荐、四季 IP、优惠券、积分商城、AR 集章、个人中心等
+- **管理后台（B 端，9 个页面）**：数据看板、知识库审核、活动 / 券码 / 推送 / 专线 / 用户 / 角色权限
+- **AI 问答**：苏小T 由大模型驱动，**只依据后台「已通过」的知识条目作答**，从机制上避免编造（迷你 RAG）
 
-## What you should do — IMPORTANT
+> 在线预览（纯前端界面，无 AI / 无后端数据）：https://cicicrystal2026.github.io/suxiaoT/
 
-**Read the chat transcripts first.** There are 3 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+---
 
-**Read `project/苏小T AI导览原型 V2.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## 技术栈
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+| 层 | 技术 |
+|----|------|
+| 前端 | Vite 5 + React 18 + React Router v6 |
+| 后端 | Node + Express 5 |
+| 数据库 | SQLite（better-sqlite3，零配置） |
+| AI | 可切换 provider：**DeepSeek** / OpenAI 兼容 / Anthropic |
 
-## About the design files
+---
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+## 本地运行（推荐 DeepSeek）
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+### 1. 安装依赖
+```bash
+npm install
+```
 
-## Bundle contents
+### 2. 配置密钥
+复制 `.env.example` 为 `.env`，填入你的 DeepSeek 密钥：
+```bash
+cp .env.example .env
+```
+```ini
+# .env
+DEEPSEEK_API_KEY=sk-你的DeepSeek密钥
+# CHAT_MODEL=deepseek-chat   # 可选，默认就是 deepseek-chat
+```
+> DeepSeek 密钥申请：https://platform.deepseek.com/api_keys
+> 也可改用 Anthropic（`ANTHROPIC_API_KEY`）或其它 OpenAI 兼容服务，详见 `.env.example`。
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `SuXiaoT-AITour` project files (HTML prototypes, assets, components)
+### 3. 启动（开两个终端）
+```bash
+# 终端 1：后端（AI 代理 + 数据接口，端口 8787）
+npm run server
+
+# 终端 2：前端（端口 5173，已配好 /api 代理到后端）
+npm run dev
+```
+
+### 4. 打开
+- 手机端：http://localhost:5173/suxiaoT/
+- 管理后台：http://localhost:5173/suxiaoT/admin
+
+> 在浏览器里按 F12 → 切换设备工具栏，用手机视图看 C 端效果最佳（按 393px 手机屏设计）。
+
+---
+
+## 体验亮点
+
+- **和苏小T对话**：进「智能问答」，问「末班车几点」「到太湖怎么走」「樱花专列几点发车」——回答由大模型实时流式生成，且基于知识库事实。
+- **知识库控制 AI**：进后台「知识库管理」，把一条「待审核」点成「通过」或「驳回」——苏小T 能引用的依据会随之实时变化。这就是设计里「未审核不输出、杜绝编造」机制的落地。
+
+---
+
+## 目录结构
+
+```
+server/            # 后端
+  index.js         #   Express：/api/chat（流式）+ 数据接口 + 生产托管 dist
+  llm.js           #   provider 自动切换 + 苏小T 人设 + 知识依据拼装
+  db.js            #   SQLite 建表 + 种子数据
+src/
+  components/      # 共享组件（手机端 + admin）
+  screens/mobile/  # 19 个 C 端页面
+  screens/admin/   # 9 个 B 端页面
+  lib/api.js       # 前端调用后端的封装（含流式对话）
+  styles/          # 设计系统 CSS（sx.css 手机端 / adm.css 后台）
+```
+
+---
+
+## 部署
+
+- **前端**：`npm run build` 产物在 `dist/`，可托管到任意静态服务（已配 GitHub Pages 自动部署，见 `.github/workflows/deploy.yml`）。
+- **后端**：需要一个能跑 Node 的主机（Render / Railway / 云服务器等）。设好环境变量后 `npm run start`。
+- **前后端分离时**：给前端设 `VITE_API_BASE=https://你的后端域名` 再构建，让它指向后端。
+- **单机托管**：后端会自动托管 `dist/`（用 `VITE_BASE=/` 重新构建即可从根路径访问）。
+
+> ⚠️ GitHub Pages 是纯静态，跑不了后端——线上的 Pages 站点只展示界面，AI 与数据库需要后端单独部署。
+
+---
+
+## 实现状态
+
+**已完成**
+- 28 个页面 UI 与路由
+- AI 问答（流式、知识库接地、provider 可切换）
+- SQLite 数据层（券 / 积分 / 知识库）+ 知识库审核读写
+
+**待开发（下一步）**
+- 更多页面接入真实后端数据（券中心、积分商城等）
+- 登录与实名（微信授权 / 手机号）
+- 券核销、积分、消息推送等业务写操作
+- 实时到站（需对接电车运营方数据源）
