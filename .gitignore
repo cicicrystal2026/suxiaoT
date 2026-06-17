@@ -4,3 +4,9 @@ dist
 *.local
 .vite
 .claude/worktrees
+
+# 后端密钥与本地数据库
+.env
+server/data.db
+server/data.db-shm
+server/data.db-wal

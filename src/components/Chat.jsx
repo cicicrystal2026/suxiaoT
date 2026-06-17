@@ -1,17 +1,32 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MASCOT } from './Mascot';
 import Icon from './Icon';
 
-export function Composer({ ph = '和苏小T说说，去哪儿、坐哪班…', voice = true }) {
+export function Composer({ ph = '和苏小T说说，去哪儿、坐哪班…', voice = true, onSend, disabled = false }) {
+  const [text, setText] = useState('');
+  const submit = () => {
+    const t = text.trim();
+    if (!t || disabled) return;
+    onSend?.(t);
+    setText('');
+  };
   return (
     <>
       <div className="sx-brand" style={{ height: 60, gap: 9, background: '#fff', padding: '0 10px' }}>
         <div className="av" style={{ width: 40, height: 40, flex: '0 0 40px' }}><img src={MASCOT} alt=""/></div>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 999, padding: '9px 14px' }}>
-          <span style={{ flex: 1, color: 'var(--ink-3)', fontWeight: 700, fontSize: 13 }}>{ph}</span>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder={ph}
+            disabled={disabled}
+            style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', color: 'var(--ink)', fontWeight: 700, fontSize: 13, minWidth: 0 }}
+          />
           {voice && <Icon n="mic" s={18} c="var(--ink-3)"/>}
         </div>
-        <div className="mic" style={{ width: 44, height: 44, flex: '0 0 44px' }}><Icon n="send" s={20} c="#fff"/></div>
+        <div className="mic" onClick={submit} style={{ width: 44, height: 44, flex: '0 0 44px', cursor: 'pointer', opacity: disabled ? 0.5 : 1 }}><Icon n="send" s={20} c="#fff"/></div>
       </div>
       <div className="sx-home"></div>
     </>
