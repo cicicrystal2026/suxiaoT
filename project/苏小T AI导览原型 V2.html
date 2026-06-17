@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>苏小T · AI导览 高保真原型 V2（手机端 + 后台运营平台）</title>
+<meta name="ext-resource-dependency" content="assets/suxiaot-sm.png" data-resource-id="mascot" />
+<meta name="ext-resource-dependency" content="assets/tram-sm.jpg" data-resource-id="tram" />
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#FBF6EF"/><rect x="34" y="22" width="32" height="40" rx="10" fill="#253559"/><circle cx="44" cy="40" r="4" fill="#C3D859"/><circle cx="56" cy="40" r="4" fill="#C3D859"/><ellipse cx="38" cy="48" rx="3" ry="2" fill="#E99EBD"/><ellipse cx="62" cy="48" rx="3" ry="2" fill="#E99EBD"/><rect x="40" y="64" width="20" height="18" rx="7" fill="#fff" stroke="#253559" stroke-width="1.5"/></svg>
+</template>
+<style>
+  html,body{margin:0;padding:0;background:#EDE6DA;}
+  *{font-family:'Nunito','PingFang SC',sans-serif;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="admin-shared.jsx"></script>
+<script type="text/babel" src="screens-intro.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-chat.jsx"></script>
+<script type="text/babel" src="screens-transit.jsx"></script>
+<script type="text/babel" src="screens-travel.jsx"></script>
+<script type="text/babel" src="screens-ip.jsx"></script>
+<script type="text/babel" src="screens-misc.jsx"></script>
+<script type="text/babel" src="screens-new.jsx"></script>
+<script type="text/babel" src="admin-screens-1.jsx"></script>
+<script type="text/babel" src="admin-screens-2.jsx"></script>
+<script type="text/babel">
+const W=393,H=852;        // iPhone 15
+const AW=1320,AH=884;     // admin web
+
+function App(){
+  return (
+    <DesignCanvas>
+      <DCSection id="s0" title="00 · 设计说明与设计系统" subtitle="目标 / 配色 / 字体 / 统一组件 / 全量页面清单（手机端19屏 + 后台9页）">
+        <DCArtboard id="board" label="设计系统总览" width={820} height={1360}><DesignBoard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s1" title="手机C端 · 01 首页与智能问答" subtitle="5.1 用户体系 · 5.2 智能问答与出行查询">
+        <DCArtboard id="home" label="01 · 公众号首页" width={W} height={H}><HomeA/></DCArtboard>
+        <DCArtboard id="chat" label="02 · AI智能问答" width={W} height={H}><ChatAssistant/></DCArtboard>
+        <DCArtboard id="arrival" label="03 · 实时到站查询" width={W} height={H}><ArrivalResult/></DCArtboard>
+        <DCArtboard id="service" label="04 · 7×24 AI客服" width={W} height={H}><CustomerService/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s2" title="手机C端 · 02 AI行程规划" subtitle="5.3 个性化单日行程规划（输入 → 方案）">
+        <DCArtboard id="planner" label="05 · 行程规划·需求输入" width={W} height={H}><TripPlanner/></DCArtboard>
+        <DCArtboard id="route" label="06 · 行程规划·方案结果" width={W} height={H}><RouteRec/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s3" title="手机C端 · 03 文旅商业融合" subtitle="5.4 专线 / 攻略 / 票务 / 券">
+        <DCArtboard id="themeroutes" label="07 · 文旅专线" width={W} height={H}><ThemeRoutes/></DCArtboard>
+        <DCArtboard id="guide" label="08 · 沿线攻略" width={W} height={H}><CommerceGuide/></DCArtboard>
+        <DCArtboard id="detail" label="09 · 景点/专线详情·票务" width={W} height={H}><AttractionDetail/></DCArtboard>
+        <DCArtboard id="coupon" label="10 · 优惠券中心" width={W} height={H}><CouponCenter/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s4" title="手机C端 · 04 四季IP运营" subtitle="5.5 四季IP · 合影 · 集章 · 积分">
+        <DCArtboard id="season" label="11 · 四季IP主页" width={W} height={H}><SeasonIP/></DCArtboard>
+        <DCArtboard id="ipchat" label="12 · 苏小T拟人对话" width={W} height={H}><IPChat/></DCArtboard>
+        <DCArtboard id="poster" label="13 · AI合影旅拍" width={W} height={H}><PosterMaker/></DCArtboard>
+        <DCArtboard id="ar" label="14 · 沿线扫码集章" width={W} height={H}><ARCheckin/></DCArtboard>
+        <DCArtboard id="mall" label="15 · 积分商城" width={W} height={H}><PointsMall/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s5" title="手机C端 · 05 站台轻量化与用户中心" subtitle="5.6 站台扫码 · 5.1 渐进式实名 · 个人中心">
+        <DCArtboard id="station" label="16 · 站台扫码服务" width={W} height={H}><StationScan/></DCArtboard>
+        <DCArtboard id="realname" label="17 · 手机号一键实名" width={W} height={H}><RealNameAuth/></DCArtboard>
+        <DCArtboard id="me" label="18 · 我的·个人中心" width={W} height={H}><Profile/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="b0" title="后台B端 · 06 登录与数据看板" subtitle="5.7 运营平台 · 登录 / 看板">
+        <DCArtboard id="alogin" label="B1 · 运营平台登录" width={AW} height={AH}><AdminLogin/></DCArtboard>
+        <DCArtboard id="adash" label="B2 · 数据看板" width={AW} height={AH}><AdminDashboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="b1" title="后台B端 · 07 内容运营" subtitle="知识库 · 活动配置 · 文旅专线">
+        <DCArtboard id="akb" label="B3 · 知识库管理" width={AW} height={AH}><AdminKB/></DCArtboard>
+        <DCArtboard id="aact" label="B4 · 活动配置" width={AW} height={AH}><AdminActivity/></DCArtboard>
+        <DCArtboard id="aroute" label="B7 · 文旅专线管理" width={AW} height={AH}><AdminRoute/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="b2" title="后台B端 · 08 商业与触达" subtitle="券码管理 · 消息推送">
+        <DCArtboard id="acoupon" label="B5 · 券码管理" width={AW} height={AH}><AdminCoupon/></DCArtboard>
+        <DCArtboard id="apush" label="B6 · 消息推送" width={AW} height={AH}><AdminPush/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="b3" title="后台B端 · 09 用户与权限" subtitle="用户会员 · 角色权限">
+        <DCArtboard id="auser" label="B8 · 用户会员管理" width={AW} height={AH}><AdminUser/></DCArtboard>
+        <DCArtboard id="arole" label="B9 · 角色权限管理" width={AW} height={AH}><AdminRole/></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

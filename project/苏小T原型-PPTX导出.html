@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>苏小T · AI导览原型 · PPTX导出</title>
+<meta name="ext-resource-dependency" content="assets/suxiaot-sm.png" data-resource-id="mascot" />
+<meta name="ext-resource-dependency" content="assets/tram-sm.jpg" data-resource-id="tram" />
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#FBF6EF"/><rect x="34" y="22" width="32" height="40" rx="10" fill="#253559"/><circle cx="44" cy="40" r="4" fill="#C3D859"/><circle cx="56" cy="40" r="4" fill="#C3D859"/><ellipse cx="38" cy="48" rx="3" ry="2" fill="#E99EBD"/><ellipse cx="62" cy="48" rx="3" ry="2" fill="#E99EBD"/><rect x="40" y="64" width="20" height="18" rx="7" fill="#fff" stroke="#253559" stroke-width="1.5"/></svg>
+</template>
+<style>
+  html,body{margin:0;padding:0;background:#0d111a;}
+  deck-stage:not(:defined){visibility:hidden;}
+  *{font-family:'Nunito','PingFang SC','Hiragino Sans GB',sans-serif;}
+  .ps{width:1920px;height:1080px;position:relative;overflow:hidden;background:var(--paper,#FBF6EF);color:#253559;}
+  .ps-head{position:absolute;top:54px;left:74px;right:74px;display:flex;align-items:center;gap:18px;z-index:3;}
+  .ps-n{font-family:'ZCOOL KuaiLe',sans-serif;font-size:34px;color:#EE7FA8;background:#fff;border:1px solid #EFE7DB;
+    width:74px;height:74px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(37,53,89,.1);}
+  .ps-t{font-family:'ZCOOL KuaiLe',sans-serif;font-size:40px;line-height:1.05;}
+  .ps-prd{font-size:18px;font-weight:800;color:#5A6480;margin-top:4px;letter-spacing:.5px;}
+  .ps-foot{position:absolute;bottom:42px;left:74px;right:74px;display:flex;align-items:center;gap:13px;z-index:3;color:#9AA2B8;}
+  .ps-foot .av{width:40px;height:40px;border-radius:50%;background:#253559;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+  .ps-foot .av img{width:42px;margin-bottom:-3px;}
+  .ps-foot b{font-family:'ZCOOL KuaiLe',sans-serif;font-size:18px;color:#253559;}
+  .ps-foot span{font-size:14px;font-weight:800;}
+  /* phone stage */
+  .ps-phwrap{position:absolute;left:150px;top:50%;transform:translateY(-50%);width:393px;height:852px;border-radius:8px;overflow:hidden;
+    box-shadow:0 34px 90px rgba(37,53,89,.26),0 0 0 1px #EFE7DB;}
+  .ps-info{position:absolute;left:640px;right:120px;top:50%;transform:translateY(-50%);}
+  .ps-info h2{font-family:'ZCOOL KuaiLe',sans-serif;font-size:54px;line-height:1.18;margin:0 0 8px;color:#253559;}
+  .ps-info .tag{display:inline-flex;align-items:center;gap:8px;background:#FCE6EE;color:#E05E8E;font-weight:800;font-size:20px;
+    padding:8px 18px;border-radius:999px;margin-bottom:26px;}
+  .ps-info .pt{display:flex;gap:15px;align-items:flex-start;margin-bottom:18px;}
+  .ps-info .pt i{width:13px;height:13px;border-radius:50%;background:#EE7FA8;margin-top:11px;flex:0 0 13px;}
+  .ps-info .pt p{margin:0;font-size:25px;font-weight:700;line-height:1.5;color:#3a466a;}
+  /* admin stage */
+  .ps-admwrap{position:absolute;left:50%;top:600px;transform:translate(-50%,-50%);width:1320px;height:884px;border-radius:14px;overflow:hidden;
+    box-shadow:0 34px 90px rgba(37,53,89,.26),0 0 0 1px #E7E3DA;}
+  .ps-adcap{position:absolute;left:74px;right:74px;top:150px;display:flex;align-items:baseline;gap:18px;z-index:2;}
+  .ps-adcap .sub{font-size:21px;font-weight:800;color:#5A6480;}
+  /* dividers / title */
+  .ps.dark{background:linear-gradient(150deg,#16203A 0%,#243456 55%,#3A2C52 100%);color:#fff;}
+  .ps-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 160px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="admin-shared.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-chat.jsx"></script>
+<script type="text/babel" src="screens-transit.jsx"></script>
+<script type="text/babel" src="screens-travel.jsx"></script>
+<script type="text/babel" src="screens-ip.jsx"></script>
+<script type="text/babel" src="screens-misc.jsx"></script>
+<script type="text/babel" src="screens-new.jsx"></script>
+<script type="text/babel" src="admin-screens-1.jsx"></script>
+<script type="text/babel" src="admin-screens-2.jsx"></script>
+<script type="text/babel">
+const G=window;
+const MAS=(window.__resources&&window.__resources.mascot)||'assets/suxiaot-sm.png';
+
+function Foot(){
+  return (
+    <div className="ps-foot">
+      <div className="av"><img src={MAS} alt=""/></div>
+      <b>苏小T</b><span>· 苏州有轨电车 AI 导览 · 高保真原型</span>
+      <span style={{marginLeft:'auto'}}>PRD V1.0 · 2026.06</span>
+    </div>
+  );
+}
+
+function PhoneSlide({n,title,prd,points,Comp,label}){
+  return (
+    <section data-label={label}>
+      <div className="ps">
+        <div className="ps-head">
+          <div className="ps-n">{n}</div>
+          <div><div className="ps-t">手机C端 · 公众号 H5</div><div className="ps-prd">iPhone 15 · 393 × 852 · 竖版</div></div>
+        </div>
+        <div className="ps-phwrap"><Comp/></div>
+        <div className="ps-info">
+          <span className="tag">📱 {prd}</span>
+          <h2>{title}</h2>
+          {points.map((p,i)=>(<div className="pt" key={i}><i/><p>{p}</p></div>))}
+        </div>
+        <Foot/>
+      </div>
+    </section>
+  );
+}
+
+function AdminSlide({n,title,sub,Comp,label}){
+  return (
+    <section data-label={label}>
+      <div className="ps" style={{background:'#F0EBE2'}}>
+        <div className="ps-head">
+          <div className="ps-n" style={{color:'#4A78C9'}}>{n}</div>
+          <div><div className="ps-t">后台B端 · 运营平台</div><div className="ps-prd">Web 管理后台 · 1320 × 884 · 纯软件零硬件</div></div>
+        </div>
+        <div className="ps-adcap"><div className="ps-t" style={{fontSize:34,color:'#16203A'}}>{title}</div><div className="sub">{sub}</div></div>
+        <div className="ps-admwrap"><Comp/></div>
+      </div>
+    </section>
+  );
+}
+
+const PHONES=[
+  ['01',G.HomeA,'公众号首页','5.1 / 5.2 · 功能聚合入口',['唯一主入口，零安装即开即用','实时到站·问答·行程·客服一屏直达','底部苏小T语音入口贯穿全程']],
+  ['02',G.ChatAssistant,'AI智能问答','5.2 · F-QA-01',['文本 / 语音自然语言提问','意图识别：出行 / 文旅 / 客服','到站结果以结构化卡片 + 语音播报']],
+  ['03',G.ArrivalResult,'实时到站查询','5.2 · F-QA-01',['到站 / 末班 / 票价 / 换乘秒查','拥挤度与后续班次一目了然','接口未就绪按时刻表估算兜底']],
+  ['04',G.CustomerService,'7×24 AI客服','5.2 · F-QA-02',['RAG 专属知识库全天候应答','票务 / 失物 / 设施 / 文旅全覆盖','低置信或敏感问题一键转人工']],
+  ['05',G.TripPlanner,'AI行程规划 · 输入','5.3 · F-TR-01',['选人群 / 时长 / 偏好或一句话描述','聚焦一号线、二号线沿线','苏小T 一句话秒级生成']],
+  ['06',G.RouteRec,'AI行程规划 · 方案','5.3 · F-TR-01',['景点 + 商户 + 券 + 导航一体化','时间轴串联换乘与游玩','一键导航直接出发']],
+  ['07',G.ThemeRoutes,'文旅专线','5.4 · F-BIZ-01',['四季 / 亲子 / 美食主题专线','站点 · 时长 · 票价清晰可比','框架先建，谈妥一家上线一家']],
+  ['08',G.CommerceGuide,'沿线攻略','5.4 · F-BIZ-01',['景点 · 美食 · 住宿 · 券分类浏览','苏小T 一键生成本站攻略','商户券当日电车票核销']],
+  ['09',G.AttractionDetail,'景点 / 专线详情 · 票务','5.4 · F-BIZ-01',['语音导览，普通话 / 苏州话切换','玩法亮点与开放信息','票务预订与一键导航']],
+  ['10',G.CouponCenter,'优惠券中心','5.4 · F-BIZ-01',['可领取 / 我的券 / 已使用分区','商户 · 票务 · 文创多类券','线下扫码领券，门店核销闭环']],
+  ['11',G.SeasonIP,'四季 IP 主页','5.5 · F-IP-01',['春樱 · 夏荷 · 秋桂 · 冬梅四季切换','合影 · 集章 · 积分 · 对话玩法','当季活动同步 B 端配置']],
+  ['12',G.IPChat,'苏小T 拟人对话','5.5 · F-IP-01',['苏小T 作为出行搭子拟人对话','可生成专属打卡海报','积分兑好礼入口']],
+  ['13',G.PosterMaker,'AI 合影旅拍','5.5 · F-IP-01',['选场景上传照片生成合影海报','四季模板与 AI 文案心情','生成即得积分']],
+  ['14',G.ARCheckin,'沿线扫码集章','5.5 / 5.6',['扫站台立牌 AR 识别苏小T','沿线集章，集满兑限定文创','AR 景点导航打卡']],
+  ['15',G.PointsMall,'积分商城','5.5 · F-IP-01',['文创 / 票卡 / 商户券通兑','坐电车玩苏州攒积分','签到与赚积分攻略']],
+  ['16',G.StationScan,'站台扫码服务','5.6 · F-ST-01',['灯箱二维码扫码即用，零硬件','集章 / 合影 / 资讯三大服务','回流公众号与线上同源']],
+  ['17',G.RealNameAuth,'手机号一键实名','5.1 · F-UC-02',['仅领券 / 集章时触发，降低流失','微信手机号快速验证一键授权','信息加密存储，符合实名制']],
+  ['18',G.Profile,'我的 · 个人中心','5.1 · F-UC-01',['身份归一：行程 / 积分 / 券互通','出行 · 打卡 · 积分数据沉淀','适老化大字语音模式']],
+];
+
+const ADMINS=[
+  ['B1',G.AdminLogin,'运营平台登录','角色权限分配 · 操作全程审计'],
+  ['B2',G.AdminDashboard,'数据看板','咨询量 · 自主解决率 · 转化 · 核销 GMV'],
+  ['B3',G.AdminKB,'知识库管理','三类知识 · 审核状态机制，杜绝AI编造'],
+  ['B4',G.AdminActivity,'活动配置','四季 IP · 集章 · 合影 · 券活动'],
+  ['B7',G.AdminRoute,'文旅专线管理','站点 · 票价 · 关联券，实时同步C端'],
+  ['B5',G.AdminCoupon,'券码管理','券模板 · 库存 · 核销追踪'],
+  ['B6',G.AdminPush,'消息推送','人群定向 · 触达与点击率'],
+  ['B8',G.AdminUser,'用户会员管理','身份归一 · 画像 · 积分 · 实名率'],
+  ['B9',G.AdminRole,'角色权限管理','RBAC 权限矩阵 · 操作日志可审计'],
+];
+
+function TitleSlide(){
+  return (
+    <section data-label="封面">
+      <div className="ps dark">
+        <div style={{position:'absolute',width:560,height:560,borderRadius:'50%',background:'radial-gradient(circle,rgba(238,127,168,.32),transparent 70%)',right:-140,top:-120}}/>
+        <div style={{position:'absolute',width:440,height:440,borderRadius:'50%',background:'radial-gradient(circle,rgba(127,166,60,.22),transparent 70%)',left:-120,bottom:-80}}/>
+        <div className="ps-center">
+          <img src={MAS} style={{width:180,filter:'drop-shadow(0 16px 30px rgba(0,0,0,.35))'}}/>
+          <div style={{fontFamily:"'ZCOOL KuaiLe',sans-serif",fontSize:84,marginTop:18,lineHeight:1.1}}>苏小T · AI 导览</div>
+          <div style={{fontSize:30,fontWeight:800,color:'rgba(255,255,255,.7)',marginTop:14}}>苏州高新有轨电车 · 高保真产品原型（对齐 PRD V1.0）</div>
+          <div style={{display:'flex',gap:48,marginTop:48}}>
+            {[['19 屏','手机端公众号 H5'],['9 页','后台运营平台'],['1 套','统一品牌设计系统']].map((s,i)=>(
+              <div key={i}><div style={{fontFamily:"'ZCOOL KuaiLe',sans-serif",fontSize:48,color:'#EE7FA8'}}>{s[0]}</div>
+              <div style={{fontSize:20,fontWeight:800,color:'rgba(255,255,255,.6)',marginTop:4}}>{s[1]}</div></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Divider({n,title,sub,accent}){
+  return (
+    <section data-label={title}>
+      <div className="ps dark">
+        <div style={{position:'absolute',width:480,height:480,borderRadius:'50%',background:`radial-gradient(circle,${accent},transparent 70%)`,right:-120,top:'50%',transform:'translateY(-50%)'}}/>
+        <div className="ps-center" style={{alignItems:'flex-start',textAlign:'left',paddingLeft:200}}>
+          <div style={{fontFamily:"'ZCOOL KuaiLe',sans-serif",fontSize:150,color:'rgba(255,255,255,.16)',lineHeight:.9}}>{n}</div>
+          <div style={{fontFamily:"'ZCOOL KuaiLe',sans-serif",fontSize:72,marginTop:6}}>{title}</div>
+          <div style={{fontSize:28,fontWeight:800,color:'rgba(255,255,255,.66)',marginTop:14}}>{sub}</div>
+        </div>
+        <Foot/>
+      </div>
+    </section>
+  );
+}
+
+function Deck(){
+  return (
+    <deck-stage width="1920" height="1080">
+      <TitleSlide/>
+      <Divider n="A" title="手机端 · C 端" sub="微信公众号 H5 · 19 屏 · 小白即会用" accent="rgba(238,127,168,.32)"/>
+      {PHONES.map((p,i)=>(<PhoneSlide key={i} n={p[0]} Comp={p[1]} title={p[2]} prd={p[3]} points={p[4]} label={p[0]+' '+p[2]}/>))}
+      <Divider n="B" title="后台 · B 端" sub="运营管理平台 · 9 页 · 纯软件零硬件依赖" accent="rgba(74,120,201,.3)"/>
+      {ADMINS.map((a,i)=>(<AdminSlide key={i} n={a[0]} Comp={a[1]} title={a[2]} sub={a[3]} label={a[0]+' '+a[2]}/>))}
+    </deck-stage>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Deck/>);
+</script>
+<script src="deck-stage.js"></script>
+</body>
+</html>

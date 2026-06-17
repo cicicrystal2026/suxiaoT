@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>苏小T · AI导览 手机端高保真原型</title>
+<meta name="ext-resource-dependency" content="assets/suxiaot-sm.png" data-resource-id="mascot" />
+<meta name="ext-resource-dependency" content="assets/tram-sm.jpg" data-resource-id="tram" />
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#FBF6EF"/><rect x="34" y="22" width="32" height="40" rx="10" fill="#253559"/><circle cx="44" cy="40" r="4" fill="#C3D859"/><circle cx="56" cy="40" r="4" fill="#C3D859"/><ellipse cx="38" cy="48" rx="3" ry="2" fill="#E99EBD"/><ellipse cx="62" cy="48" rx="3" ry="2" fill="#E99EBD"/><rect x="40" y="64" width="20" height="18" rx="7" fill="#fff" stroke="#253559" stroke-width="1.5"/></svg>
+</template>
+<style>
+  html,body{margin:0;padding:0;background:#EDE6DA;}
+  *{font-family:'Nunito','PingFang SC',sans-serif;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="screens-intro.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-chat.jsx"></script>
+<script type="text/babel" src="screens-transit.jsx"></script>
+<script type="text/babel" src="screens-travel.jsx"></script>
+<script type="text/babel" src="screens-ip.jsx"></script>
+<script type="text/babel" src="screens-misc.jsx"></script>
+<script type="text/babel">
+const W=393,H=852;
+
+function App(){
+  return (
+    <DesignCanvas>
+      <DCSection id="s0" title="00 · 设计说明与设计系统" subtitle="目标 / 配色 / 字体 / 统一组件 / 页面清单">
+        <DCArtboard id="board" label="设计系统总览" width={780} height={852}><DesignBoard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s1" title="01 · 公众号首页 · 功能聚合" subtitle="3个文旅温暖风格变体，可对比挑选">
+        <DCArtboard id="homeA" label="A · 暖白IP英雄（推荐）" width={W} height={H}><HomeA/></DCArtboard>
+        <DCArtboard id="homeB" label="B · 实景夕阳杂志风" width={W} height={H}><HomeB/></DCArtboard>
+        <DCArtboard id="homeC" label="C · 对话/语音优先" width={W} height={H}><HomeC/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s2" title="02 · AI 出行问答" subtitle="F1 智能出行查询 · 实时到站">
+        <DCArtboard id="chat" label="AI智能出行助手" width={W} height={H}><ChatAssistant/></DCArtboard>
+        <DCArtboard id="arrival" label="实时到站结果页" width={W} height={H}><ArrivalResult/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s3" title="03 · AI 文旅推荐" subtitle="F2 推荐引擎 · F6 商业导览">
+        <DCArtboard id="route" label="AI文旅路线推荐" width={W} height={H}><RouteRec/></DCArtboard>
+        <DCArtboard id="guide" label="沿线攻略（景点·美食·券）" width={W} height={H}><CommerceGuide/></DCArtboard>
+        <DCArtboard id="detail" label="景点/攻略详情页" width={W} height={H}><AttractionDetail/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s4" title="04 · 客服与出行提醒" subtitle="F3 7×24客服 · F4 个性化提醒">
+        <DCArtboard id="service" label="7×24 AI客服" width={W} height={H}><CustomerService/></DCArtboard>
+        <DCArtboard id="remind" label="个性化提醒与订阅" width={W} height={H}><Reminders/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s5" title="05 · 苏小T IP 互动" subtitle="F5 拟人对话 · AI海报 · 积分">
+        <DCArtboard id="ipchat" label="苏小T 拟人对话" width={W} height={H}><IPChat/></DCArtboard>
+        <DCArtboard id="poster" label="AI海报打卡生成" width={W} height={H}><PosterMaker/></DCArtboard>
+        <DCArtboard id="mall" label="积分商城 / 兑换" width={W} height={H}><PointsMall/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="s6" title="06 · AR打卡 与 我的" subtitle="F10 AR互动 · 个人中心">
+        <DCArtboard id="ar" label="AR扫码互动打卡" width={W} height={H}><ARCheckin/></DCArtboard>
+        <DCArtboard id="me" label="我的 / 个人中心" width={W} height={H}><Profile/></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
