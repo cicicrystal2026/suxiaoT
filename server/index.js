@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import db from './db.js';
-import { client, CHAT_MODEL, buildSystemPrompt } from './llm.js';
+import { streamCompletion, hasProvider, MODEL, PROVIDER_NAME } from './llm.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,7 +15,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // ---- 健康检查 ----
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, model: CHAT_MODEL, hasKey: !!process.env.ANTHROPIC_API_KEY });
+  res.json({ ok: true, provider: PROVIDER_NAME, model: MODEL, hasKey: hasProvider });
 });
 
 // ---- 业务数据（读）----
@@ -44,7 +44,7 @@ app.patch('/api/kb/:id', (req, res) => {
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ error: 'messages required' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'no_api_key', message: '后端未配置 ANTHROPIC_API_KEY' });
+  if (!hasProvider) return res.status(503).json({ error: 'no_api_key', message: '后端未配置 LLM 密钥（DEEPSEEK_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY 任一）' });
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -52,15 +52,7 @@ app.post('/api/chat', async (req, res) => {
   const send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 
   try {
-    const clean = messages.slice(-12).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: String(m.content || '') }));
-    const stream = await client.messages.stream({
-      model: CHAT_MODEL,
-      max_tokens: 1024,
-      system: buildSystemPrompt(),
-      messages: clean,
-    });
-    stream.on('text', (t) => send('delta', { text: t }));
-    await stream.finalMessage();
+    await streamCompletion({ messages, onText: (t) => send('delta', { text: t }) });
     send('done', {});
     res.end();
   } catch (err) {
@@ -78,4 +70,4 @@ if (existsSync(dist)) {
 }
 
 const PORT = process.env.PORT || 8787;
-app.listen(PORT, () => console.log(`✅ 苏小T 后端运行中  http://localhost:${PORT}  (model: ${CHAT_MODEL}, key: ${process.env.ANTHROPIC_API_KEY ? '已配置' : '未配置'})`));
+app.listen(PORT, () => console.log(`✅ 苏小T 后端运行中  http://localhost:${PORT}  (provider: ${PROVIDER_NAME}, model: ${MODEL}, key: ${hasProvider ? '已配置' : '未配置'})`));

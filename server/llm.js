@@ -1,12 +1,44 @@
-// server/llm.js — Claude 客户端 + 苏小T 人设 + 知识库依据（迷你 RAG）
+// server/llm.js — 可切换 LLM provider（DeepSeek / OpenAI 兼容 / Anthropic）+ 苏小T 人设 + 知识依据
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import db from './db.js';
 
-// 密钥只在后端读取，绝不下发前端
-export const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// 按环境变量自动选择 provider：谁的 key 设了就用谁。
+// 优先级：DeepSeek > 通用 OpenAI 兼容 > Anthropic
+function detectProvider() {
+  if (process.env.DEEPSEEK_API_KEY) {
+    return {
+      name: 'deepseek',
+      kind: 'openai',
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: process.env.LLM_BASE_URL || 'https://api.deepseek.com',
+      model: process.env.CHAT_MODEL || 'deepseek-chat',
+    };
+  }
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      name: 'openai-compatible',
+      kind: 'openai',
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: process.env.LLM_BASE_URL || 'https://api.openai.com/v1',
+      model: process.env.CHAT_MODEL || 'gpt-4o-mini',
+    };
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    return {
+      name: 'anthropic',
+      kind: 'anthropic',
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      model: process.env.CHAT_MODEL || 'claude-haiku-4-5-20251001',
+    };
+  }
+  return null;
+}
 
-// 默认用 Haiku（快 + 便宜，适合客服问答）；可用 CHAT_MODEL 覆盖
-export const CHAT_MODEL = process.env.CHAT_MODEL || 'claude-haiku-4-5-20251001';
+export const provider = detectProvider();
+export const hasProvider = !!provider;
+export const MODEL = provider?.model || '(未配置)';
+export const PROVIDER_NAME = provider?.name || '(未配置)';
 
 // 取「已通过」审核的知识条目，拼成 AI 的事实依据
 export function buildSystemPrompt() {
@@ -22,4 +54,40 @@ export function buildSystemPrompt() {
 
 【知识依据】
 ${knowledge}`;
+}
+
+// 统一的流式接口：onText(片段) 逐段回调；屏蔽不同 provider 的差异
+export async function streamCompletion({ messages, onText }) {
+  if (!provider) throw new Error('未配置任何 LLM 密钥');
+  const system = buildSystemPrompt();
+  const history = messages.slice(-12).map(m => ({
+    role: m.role === 'user' ? 'user' : 'assistant',
+    content: String(m.content || ''),
+  }));
+
+  if (provider.kind === 'openai') {
+    const client = new OpenAI({ apiKey: provider.apiKey, baseURL: provider.baseURL });
+    const stream = await client.chat.completions.create({
+      model: provider.model,
+      max_tokens: 1024,
+      stream: true,
+      messages: [{ role: 'system', content: system }, ...history],
+    });
+    for await (const chunk of stream) {
+      const t = chunk.choices?.[0]?.delta?.content;
+      if (t) onText(t);
+    }
+    return;
+  }
+
+  // anthropic
+  const client = new Anthropic({ apiKey: provider.apiKey });
+  const stream = await client.messages.stream({
+    model: provider.model,
+    max_tokens: 1024,
+    system,
+    messages: history,
+  });
+  stream.on('text', (t) => onText(t));
+  await stream.finalMessage();
 }
