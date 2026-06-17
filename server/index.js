@@ -40,6 +40,49 @@ app.patch('/api/kb/:id', (req, res) => {
   res.json(db.prepare(`SELECT * FROM kb WHERE id=?`).get(req.params.id));
 });
 
+// 通用：按表名做「改状态」更新（白名单防注入）
+const STATUS_TABLES = { coupons: 'status', activities: 'status', routes: 'status' };
+function statusPatchHandler(table) {
+  return (req, res) => {
+    const col = STATUS_TABLES[table];
+    const status = req.body?.status;
+    if (!status) return res.status(400).json({ error: 'status required' });
+    db.prepare(`UPDATE ${table} SET ${col}=? WHERE id=?`).run(status, req.params.id);
+    res.json(db.prepare(`SELECT * FROM ${table} WHERE id=?`).get(req.params.id));
+  };
+}
+
+// 各后台模块（读）
+app.get('/api/activities', (req, res) => res.json(db.prepare(`SELECT * FROM activities`).all()));
+app.patch('/api/activities/:id', statusPatchHandler('activities'));
+app.get('/api/pushes', (req, res) => res.json(db.prepare(`SELECT * FROM pushes`).all()));
+app.get('/api/routes', (req, res) => res.json(db.prepare(`SELECT * FROM routes`).all()));
+app.patch('/api/routes/:id', statusPatchHandler('routes'));
+app.patch('/api/coupons/:id', statusPatchHandler('coupons'));
+app.get('/api/users', (req, res) => res.json(db.prepare(`SELECT * FROM users`).all()));
+app.get('/api/roles', (req, res) => res.json(db.prepare(`SELECT * FROM roles`).all().map(r => ({
+  ...r, perms: JSON.parse(r.perms || '[]'), access: JSON.parse(r.access || '[]'),
+}))));
+
+// 数据看板：部分指标实时从库里算（如知识库待审数），其余为运营指标
+app.get('/api/dashboard', (req, res) => {
+  const kbPending = db.prepare(`SELECT COUNT(*) n FROM kb WHERE audit_status='待审核'`).get().n;
+  const activeActs = db.prepare(`SELECT COUNT(*) n FROM activities WHERE status='进行中'`).get().n;
+  const totalUsers = db.prepare(`SELECT COUNT(*) n FROM users`).get().n;
+  res.json({
+    kpis: [
+      { label: '今日咨询量', value: '1,284', unit: '次', delta: '12.4%', up: true, icon: 'headset', color: 'var(--sakura-deep)', bg: 'var(--sakura-soft)' },
+      { label: '问答自主解决率', value: '87.6', unit: '%', delta: '2.1%', up: true, icon: 'check', color: '#5C7E2A', bg: 'var(--leaf-soft)' },
+      { label: '进行中活动', value: String(activeActs), unit: '个', icon: 'route', color: 'var(--blue)', bg: 'var(--blue-soft)' },
+      { label: '券核销 GMV', value: '¥38.2k', delta: '1.2%', up: false, icon: 'ticket', color: '#A9772A', bg: 'var(--sun-soft)' },
+    ],
+    intents: [['出行查询', '46%', 46, 'var(--sakura)'], ['文旅问答', '28%', 28, 'var(--leaf)'], ['客服工单', '18%', 18, 'var(--blue)'], ['转人工', '8%', 8, 'var(--sun)']],
+    trend: [42, 58, 51, 73, 66, 88, 95],
+    hotQuestions: db.prepare(`SELECT q, hits, coverage FROM hot_questions ORDER BY hits DESC`).all(),
+    kbPending, totalUsers,
+  });
+});
+
 // ---- AI 问答：流式（SSE）----
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body || {};
