@@ -1,0 +1,36 @@
+export default function Icon({ n, s = 22, c = 'currentColor', sw = 1.9, fill = 'none' }) {
+  const P = { width: s, height: s, viewBox: '0 0 24 24', fill, stroke: c, strokeWidth: sw, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const paths = {
+    back: <polyline points="15 5 8 12 15 19"/>,
+    home: <><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V20h12v-9.5"/></>,
+    mic: <><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></>,
+    send: <><path d="M5 12 20 5l-5 15-3.5-6.5z"/></>,
+    pin: <><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></>,
+    tram: <><rect x="6" y="3" width="12" height="13" rx="3"/><path d="M9 3 7 1M15 3l2-2M6 9h12"/><circle cx="9.5" cy="12.5" r="1"/><circle cx="14.5" cy="12.5" r="1"/><path d="M8 16l-2 5M16 16l2 5"/></>,
+    ticket: <><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><path d="M14 6v12" strokeDasharray="2 2"/></>,
+    bell: <><path d="M6 16V10a6 6 0 1 1 12 0v6l2 2H4z"/><path d="M10 21a2 2 0 0 0 4 0"/></>,
+    gift: <><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M4 13h16M12 9v11"/><path d="M12 9C9 9 8 4 12 5c4-1 3 4 0 4z"/></>,
+    scan: <><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/></>,
+    user: <><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-5.5 7-5.5S18 16 19 20"/></>,
+    search: <><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></>,
+    clock: <><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></>,
+    heart: <><path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z"/></>,
+    star: <><path d="M12 4l2.4 5 5.4.5-4 3.6 1.2 5.3L12 20.8 7 18.4l1.2-5.3-4-3.6 5.4-.5z"/></>,
+    chat: <><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 4V7a2 2 0 0 1 2-2z"/></>,
+    camera: <><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    check: <><polyline points="5 13 10 18 19 6"/></>,
+    chevR: <polyline points="9 5 16 12 9 19"/>,
+    food: <><path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10"/><path d="M16 3c-2 0-3 3-3 6h6c0-3-1-6-3-6zM16 9v12"/></>,
+    coupon: <><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M9 6v12" strokeDasharray="2 2"/><path d="M14 11h3M14 14h3"/></>,
+    route: <><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M8 6h6a3 3 0 0 1 0 6h-4a3 3 0 0 0 0 6h4"/></>,
+    play: <polygon points="8 5 19 12 8 19"/>,
+    sound: <><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></>,
+    qr: <><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><path d="M13 13h3v3M20 13v7M16 20h-3"/></>,
+    leaf: <><path d="M5 19C5 11 11 5 19 5c0 8-6 14-14 14z"/><path d="M5 19c3-3 6-5 9-6"/></>,
+    sparkle: <><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/><path d="M18 16l.8 2 .2.2"/></>,
+    grid: <><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></>,
+    headset: <><path d="M5 13v-1a7 7 0 0 1 14 0v1"/><rect x="3" y="13" width="4" height="6" rx="2"/><rect x="17" y="13" width="4" height="6" rx="2"/><path d="M19 19a4 4 0 0 1-4 3h-2"/></>,
+  };
+  return <svg {...P}>{paths[n] || null}</svg>;
+}
