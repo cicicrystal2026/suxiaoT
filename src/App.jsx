@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { isAdmin } from './lib/auth';
 
 import Home from './screens/mobile/Home';
 import ChatAssistant from './screens/mobile/ChatAssistant';
@@ -30,6 +31,11 @@ import AdminRoute from './screens/admin/AdminRoute';
 import AdminUser from './screens/admin/AdminUser';
 import AdminRole from './screens/admin/AdminRole';
 
+// 后台路由守卫：未登录跳转到登录页
+function RequireAdmin({ children }) {
+  return isAdmin() ? children : <Navigate to="/admin/login" replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
@@ -58,14 +64,14 @@ export default function App() {
         {/* Admin B-end */}
         <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/kb" element={<AdminKB />} />
-        <Route path="/admin/activity" element={<AdminActivity />} />
-        <Route path="/admin/coupon" element={<AdminCoupon />} />
-        <Route path="/admin/push" element={<AdminPush />} />
-        <Route path="/admin/route" element={<AdminRoute />} />
-        <Route path="/admin/user" element={<AdminUser />} />
-        <Route path="/admin/role" element={<AdminRole />} />
+        <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+        <Route path="/admin/kb" element={<RequireAdmin><AdminKB /></RequireAdmin>} />
+        <Route path="/admin/activity" element={<RequireAdmin><AdminActivity /></RequireAdmin>} />
+        <Route path="/admin/coupon" element={<RequireAdmin><AdminCoupon /></RequireAdmin>} />
+        <Route path="/admin/push" element={<RequireAdmin><AdminPush /></RequireAdmin>} />
+        <Route path="/admin/route" element={<RequireAdmin><AdminRoute /></RequireAdmin>} />
+        <Route path="/admin/user" element={<RequireAdmin><AdminUser /></RequireAdmin>} />
+        <Route path="/admin/role" element={<RequireAdmin><AdminRole /></RequireAdmin>} />
       </Routes>
     </BrowserRouter>
   );

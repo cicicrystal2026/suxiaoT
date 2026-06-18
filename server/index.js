@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import db from './db.js';
 import { streamCompletion, hasProvider, MODEL, PROVIDER_NAME } from './llm.js';
+import { signToken, verifyToken, verifyPassword, requireAuth, genCode, checkCode } from './auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -16,6 +17,51 @@ app.use(express.json({ limit: '1mb' }));
 // ---- 健康检查 ----
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, provider: PROVIDER_NAME, model: MODEL, hasKey: hasProvider });
+});
+
+// ---- 认证 ----
+// 后台登录：账号 + 密码
+app.post('/api/auth/admin/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const admin = db.prepare(`SELECT * FROM admins WHERE username=?`).get(username);
+  if (!admin || !verifyPassword(password || '', admin.pass)) return res.status(401).json({ error: '账号或密码错误' });
+  const token = signToken({ sub: admin.id, role: 'admin', name: admin.name, username: admin.username });
+  res.json({ token, user: { id: admin.id, name: admin.name, username: admin.username, role_name: admin.role_name, role: 'admin' } });
+});
+
+// 手机端：发送验证码（开发模式直接返回 devCode；生产换真短信）
+app.post('/api/auth/send-code', (req, res) => {
+  const { phone } = req.body || {};
+  if (!/^1\d{10}$/.test(phone || '')) return res.status(400).json({ error: '请输入正确的手机号' });
+  const code = genCode(phone);
+  res.json({ ok: true, devCode: code, note: '开发模式：验证码直接返回，生产环境改为短信下发' });
+});
+
+// 手机端：验证码登录 / 实名（带 name 即视为实名）
+app.post('/api/auth/login', (req, res) => {
+  const { phone, code, name } = req.body || {};
+  if (!checkCode(phone, code)) return res.status(401).json({ error: '验证码错误或已过期' });
+  let acc = db.prepare(`SELECT * FROM accounts WHERE phone=?`).get(phone);
+  if (!acc) {
+    const info = db.prepare(`INSERT INTO accounts (phone,name,realname) VALUES (?,?,?)`)
+      .run(phone, name || '苏州出行用户', name ? '已实名' : '未实名');
+    acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(info.lastInsertRowid);
+  } else if (name) {
+    db.prepare(`UPDATE accounts SET name=?, realname='已实名' WHERE id=?`).run(name, acc.id);
+    acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(acc.id);
+  }
+  const token = signToken({ sub: acc.id, role: 'member', name: acc.name });
+  res.json({ token, user: { ...acc, role: 'member' } });
+});
+
+// 当前登录者
+app.get('/api/auth/me', requireAuth(), (req, res) => {
+  if (req.user.role === 'admin') {
+    const a = db.prepare(`SELECT id,username,name,role_name FROM admins WHERE id=?`).get(req.user.sub);
+    return res.json(a ? { ...a, role: 'admin' } : null);
+  }
+  const acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(req.user.sub);
+  res.json(acc ? { ...acc, role: 'member' } : null);
 });
 
 // ---- 业务数据（读）----

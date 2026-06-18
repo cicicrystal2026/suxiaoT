@@ -3,6 +3,7 @@
 import Database from 'better-sqlite3';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { hashPassword } from './auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const db = new Database(join(__dirname, 'data.db'));
@@ -54,6 +55,15 @@ CREATE TABLE IF NOT EXISTS roles (
 CREATE TABLE IF NOT EXISTS hot_questions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   q TEXT NOT NULL, hits INTEGER, coverage TEXT
+);
+CREATE TABLE IF NOT EXISTS admins (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL, name TEXT, pass TEXT NOT NULL, role_name TEXT
+);
+CREATE TABLE IF NOT EXISTS accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  phone TEXT UNIQUE NOT NULL, name TEXT, realname TEXT DEFAULT '未实名',
+  points INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now'))
 );
 `);
 
@@ -155,5 +165,11 @@ seedIfEmpty('hot_questions', ['q', 'hits', 'coverage'], [
   ['站台失物招领', 142, '转人工'],
   ['宠物能否乘车', 98, '待补充'],
 ]);
+
+// 后台默认管理员（开发账号；生产请改密码）：operator@sztram / sztram2026
+if (db.prepare(`SELECT COUNT(*) n FROM admins`).get().n === 0) {
+  db.prepare(`INSERT INTO admins (username,name,pass,role_name) VALUES (?,?,?,?)`)
+    .run('operator@sztram', '运营管理员', hashPassword('sztram2026'), '超级管理员');
+}
 
 export default db;

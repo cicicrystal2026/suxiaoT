@@ -1,18 +1,33 @@
-// src/lib/api.js — 前端调用后端的封装
-// 开发环境：留空，走 Vite 代理 /api → 本地后端
-// 生产环境（前端单独部署，如 GitHub Pages）：设 VITE_API_BASE 指向你部署的后端地址
+// src/lib/api.js — 前端调用后端的封装（自动附带登录 token）
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+const TOKEN_KEY = 'sx_token';
+
+function authHeaders() {
+  const t = localStorage.getItem(TOKEN_KEY);
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
 
 export async function getJSON(path) {
-  const r = await fetch(`${API_BASE}${path}`);
+  const r = await fetch(`${API_BASE}${path}`, { headers: { ...authHeaders() } });
   if (!r.ok) throw new Error(`请求失败 ${r.status}`);
   return r.json();
+}
+
+export async function postJSON(path, body) {
+  const r = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `请求失败 ${r.status}`);
+  return data;
 }
 
 export async function patchJSON(path, body) {
   const r = await fetch(`${API_BASE}${path}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
   if (!r.ok) throw new Error(`请求失败 ${r.status}`);
@@ -24,7 +39,7 @@ export async function streamChat(messages, { onDelta, onDone, onError, signal } 
   try {
     const r = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ messages }),
       signal,
     });
