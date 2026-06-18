@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Admin, AStat, AIcon } from '../../components/admin';
-import { getJSON, patchJSON } from '../../lib/api';
+import { useState } from 'react';
+import { Admin, AStat, AIcon, EditModal } from '../../components/admin';
+import { useCrud } from '../../lib/useCrud';
 
 const FALLBACK = [
   { id: 1, code: 'CPN-2026-0312', title: '湿地公园咖啡', type: '满减券', merchant: '湿地咖啡馆', total: 5000, claimed: 4680, status: '进行中' },
@@ -11,29 +11,43 @@ const FALLBACK = [
   { id: 6, code: 'CPN-2026-0231', title: '贡山岛骑行立减15', type: '满减券', merchant: '贡山岛景区', total: 800, claimed: 120, status: '已暂停' },
 ];
 
+const FIELDS = [
+  { key: 'title', label: '券名称', width: 'full' },
+  { key: 'code', label: '券编码', placeholder: 'CPN-2026-xxxx' },
+  { key: 'merchant', label: '商户' },
+  { key: 'type', label: '类型', type: 'select', options: ['满减券', '折扣券', '文创券', '套票券', '活动券'] },
+  { key: 'value', label: '面值', placeholder: '如 10 / 8.5 / FREE' },
+  { key: 'unit', label: '单位', type: 'select', options: ['¥', '折', ''] },
+  { key: 'desc', label: '描述', width: 'full' },
+  { key: 'sub', label: '副标题（如 剩 320 张）' },
+  { key: 'total', label: '发放量', type: 'number' },
+  { key: 'claimed', label: '已领', type: 'number' },
+  { key: 'status', label: '状态', type: 'select', options: ['进行中', '已抢光', '已暂停'] },
+];
+
 const sColor = (s) => (s === '进行中' ? 'green' : s === '已抢光' ? 'sun' : 'gray');
-const fmtTotal = (t) => (t >= 999999 ? '∞' : t.toLocaleString());
+const fmtTotal = (t) => (t >= 999999 ? '∞' : Number(t).toLocaleString());
 const fmtStock = (r) => (r.total >= 999999 ? '—' : (r.total - r.claimed));
 
 export default function AdminCoupon() {
-  const [rows, setRows] = useState(FALLBACK);
-  const [live, setLive] = useState(false);
-  const [busyId, setBusyId] = useState(null);
+  const { rows, live, create, update, remove } = useCrud('coupons', FALLBACK);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    getJSON('/api/coupons').then((d) => { if (Array.isArray(d) && d.length) { setRows(d); setLive(true); } }).catch(() => {});
-  }, []);
-
-  const setStatus = async (id, status) => {
-    setBusyId(id);
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
-    try { const u = await patchJSON(`/api/coupons/${id}`, { status }); setRows((rs) => rs.map((r) => (r.id === id ? u : r))); } catch {}
-    finally { setBusyId(null); }
+  const save = async (form) => {
+    setSaving(true);
+    try {
+      if (editing.id) await update(editing.id, form);
+      else await create(form);
+      setEditing(null);
+    } catch (e) { alert(e.message); } finally { setSaving(false); }
   };
+  const setStatus = (r, status) => update(r.id, { status }).catch((e) => alert(e.message));
+  const del = (r) => { if (confirm(`确认删除「${r.title}」？`)) remove(r.id).catch((e) => alert(e.message)); };
 
   return (
     <Admin active="coupon" crumb="商业与触达 / 券码管理" title="券码管理"
-      actions={<><button className="adm-btn ghost"><AIcon n="dl" s={15} />核销记录</button><button className="adm-btn primary" style={{ marginLeft: 8 }}><AIcon n="plus" s={15} c="#fff" />新建券模板</button></>}>
+      actions={<><button className="adm-btn ghost"><AIcon n="dl" s={15} />核销记录</button><button className="adm-btn primary" style={{ marginLeft: 8 }} onClick={() => setEditing({})}><AIcon n="plus" s={15} c="#fff" />新建券模板</button></>}>
       <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
         <AStat label="在架券模板" value={String(rows.length)} unit="个" icon="ticket" color="var(--sakura-deep)" bg="var(--sakura-soft)" />
         <AStat label="累计发放" value="16.5k" unit="张" delta="8.2%" up icon="send" color="var(--blue)" bg="var(--blue-soft)" />
@@ -59,18 +73,18 @@ export default function AdminCoupon() {
                 <td><span className="adm-pill gray">{r.type}</span></td>
                 <td style={{ color: 'var(--ink-2)', fontWeight: 700 }}>{r.merchant}</td>
                 <td className="adm-display" style={{ color: 'var(--ink)' }}>{fmtTotal(r.total)}</td>
-                <td style={{ color: 'var(--ink-2)' }}>{r.claimed.toLocaleString()}</td>
+                <td style={{ color: 'var(--ink-2)' }}>{Number(r.claimed).toLocaleString()}</td>
                 <td><span style={{ fontWeight: 800, color: fmtStock(r) === 0 ? 'var(--rose)' : 'var(--ink)' }}>{fmtStock(r)}</span></td>
                 <td><span className={'adm-pill ' + sColor(r.status)}>{r.status === '进行中' && '● '}{r.status}</span></td>
                 <td>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--ink-3)', opacity: busyId === r.id ? 0.5 : 1 }}>
-                    <AIcon n="chart" s={17} c="var(--blue)" />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--ink-3)' }}>
                     {r.status === '已暂停'
-                      ? <span className="adm-pill green" style={{ cursor: 'pointer' }} onClick={() => setStatus(r.id, '进行中')}>恢复</span>
+                      ? <span className="adm-pill green" style={{ cursor: 'pointer' }} onClick={() => setStatus(r, '进行中')}>恢复</span>
                       : r.status === '进行中'
-                        ? <span className="adm-pill gray" style={{ cursor: 'pointer' }} onClick={() => setStatus(r.id, '已暂停')}>暂停</span>
-                        : <AIcon n="edit" s={17} />}
-                    <AIcon n="trash" s={17} c="var(--rose)" />
+                        ? <span className="adm-pill gray" style={{ cursor: 'pointer' }} onClick={() => setStatus(r, '已暂停')}>暂停</span>
+                        : null}
+                    <span onClick={() => setEditing(r)} style={{ cursor: 'pointer' }}><AIcon n="edit" s={17} c="var(--blue)" /></span>
+                    <span onClick={() => del(r)} style={{ cursor: 'pointer' }}><AIcon n="trash" s={17} c="var(--rose)" /></span>
                   </div>
                 </td>
               </tr>
@@ -78,6 +92,8 @@ export default function AdminCoupon() {
           </tbody>
         </table>
       </div>
+
+      {editing && <EditModal title={editing.id ? '编辑券模板' : '新建券模板'} fields={FIELDS} value={editing} saving={saving} onSave={save} onClose={() => setEditing(null)} />}
     </Admin>
   );
 }

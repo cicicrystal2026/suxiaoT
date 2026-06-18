@@ -34,6 +34,24 @@ export async function patchJSON(path, body) {
   return r.json();
 }
 
+export async function putJSON(path, body) {
+  const r = await fetch(`${API_BASE}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `请求失败 ${r.status}`);
+  return data;
+}
+
+export async function delJSON(path) {
+  const r = await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers: { ...authHeaders() } });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `请求失败 ${r.status}`);
+  return data;
+}
+
 // 流式对话：解析后端的 SSE，逐段回调
 export async function streamChat(messages, { onDelta, onDone, onError, signal } = {}) {
   try {

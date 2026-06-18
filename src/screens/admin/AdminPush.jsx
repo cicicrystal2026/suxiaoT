@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Admin, AIcon } from '../../components/admin';
-import { getJSON } from '../../lib/api';
+import { useState } from 'react';
+import { Admin, AIcon, EditModal } from '../../components/admin';
+import { useCrud } from '../../lib/useCrud';
 
 const MASCOT = import.meta.env.BASE_URL + 'assets/suxiaot-sm.png';
 
@@ -12,19 +12,34 @@ const FALLBACK = [
   { id: 5, title: '末班车时刻调整通知', type: '出行提醒', audience: '一号线订阅', status: '已发送', reach: '5,602', ctr: '41.0%', send_at: '06-12 21:30' },
 ];
 
+const FIELDS = [
+  { key: 'title', label: '推送标题', width: 'full' },
+  { key: 'type', label: '类型', type: 'select', options: ['出行提醒', '活动推广', '功能通知'] },
+  { key: 'audience', label: '推送人群', placeholder: '通勤族 · 订阅用户' },
+  { key: 'status', label: '状态', type: 'select', options: ['已发送', '待发送', '草稿'] },
+  { key: 'send_at', label: '发送时间', placeholder: '06-15 07:00 或 未设置' },
+];
+
 const sColor = (s) => (s === '已发送' ? 'green' : s === '待发送' ? 'sun' : 'gray');
 
 export default function AdminPush() {
-  const [rows, setRows] = useState(FALLBACK);
-  const [live, setLive] = useState(false);
+  const { rows, live, create, update, remove } = useCrud('pushes', FALLBACK);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    getJSON('/api/pushes').then((d) => { if (Array.isArray(d) && d.length) { setRows(d); setLive(true); } }).catch(() => {});
-  }, []);
+  const save = async (form) => {
+    setSaving(true);
+    try {
+      if (editing.id) await update(editing.id, form);
+      else await create(form);
+      setEditing(null);
+    } catch (e) { alert(e.message); } finally { setSaving(false); }
+  };
+  const del = (r) => { if (confirm(`确认删除「${r.title}」？`)) remove(r.id).catch((e) => alert(e.message)); };
 
   return (
     <Admin active="push" crumb="商业与触达 / 消息推送" title="消息推送"
-      actions={<button className="adm-btn primary"><AIcon n="plus" s={15} c="#fff" />新建推送</button>}>
+      actions={<button className="adm-btn primary" onClick={() => setEditing({})}><AIcon n="plus" s={15} c="#fff" />新建推送</button>}>
       <div style={{ display: 'flex', gap: 14 }}>
         <div className="adm-card" style={{ flex: '0 0 360px', padding: '18px 20px', alignSelf: 'flex-start' }}>
           <div className="adm-sect" style={{ marginBottom: 14 }}><AIcon n="send" s={18} c="var(--sakura-deep)" />新建推送</div>
@@ -55,7 +70,7 @@ export default function AdminPush() {
         <div className="adm-card" style={{ flex: 1, overflow: 'hidden', alignSelf: 'flex-start' }}>
           <div style={{ padding: '15px 18px 12px', display: 'flex', alignItems: 'center' }}><div className="adm-sect"><AIcon n="clock" s={17} c="var(--blue)" />推送记录</div><span style={{ flex: 1 }} /><span className={'adm-pill ' + (live ? 'green' : 'gray')}>{live ? '● 已连后端' : '离线演示'}</span></div>
           <table className="adm-table">
-            <thead><tr><th>推送内容</th><th style={{ width: 96 }}>类型</th><th style={{ width: 130 }}>人群</th><th style={{ width: 80 }}>状态</th><th style={{ width: 80 }}>触达</th><th style={{ width: 74 }}>点击率</th></tr></thead>
+            <thead><tr><th>推送内容</th><th style={{ width: 96 }}>类型</th><th style={{ width: 130 }}>人群</th><th style={{ width: 80 }}>状态</th><th style={{ width: 80 }}>触达</th><th style={{ width: 74 }}>点击率</th><th style={{ width: 70 }}>操作</th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id}>
@@ -65,12 +80,20 @@ export default function AdminPush() {
                   <td><span className={'adm-pill ' + sColor(r.status)}>{r.status === '已发送' && '● '}{r.status}</span></td>
                   <td className="adm-display" style={{ color: 'var(--ink)' }}>{r.reach}</td>
                   <td><span style={{ fontWeight: 800, color: r.ctr === '—' ? 'var(--ink-3)' : '#5C7E2A' }}>{r.ctr}</span></td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--ink-3)' }}>
+                      <span onClick={() => setEditing(r)} style={{ cursor: 'pointer' }}><AIcon n="edit" s={17} c="var(--blue)" /></span>
+                      <span onClick={() => del(r)} style={{ cursor: 'pointer' }}><AIcon n="trash" s={17} c="var(--rose)" /></span>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {editing && <EditModal title={editing.id ? '编辑推送' : '新建推送'} fields={FIELDS} value={editing} saving={saving} onSave={save} onClose={() => setEditing(null)} />}
     </Admin>
   );
 }

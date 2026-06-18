@@ -110,6 +110,39 @@ app.get('/api/roles', (req, res) => res.json(db.prepare(`SELECT * FROM roles`).a
   ...r, perms: JSON.parse(r.perms || '[]'), access: JSON.parse(r.access || '[]'),
 }))));
 
+// ---- 通用增删改（POST 新建 / PUT 编辑 / DELETE 删除），仅管理员，字段白名单防注入 ----
+const RESOURCES = {
+  kb: { table: 'kb', fields: ['category', 'title', 'body', 'source', 'audit_status'], touch: 'updated_at' },
+  coupons: { table: 'coupons', fields: ['code', 'title', 'desc', 'value', 'unit', 'type', 'merchant', 'sub', 'total', 'claimed', 'status'] },
+  activities: { table: 'activities', fields: ['title', 'season', 'type', 'status', 'date', 'joined', 'badge'] },
+  routes: { table: 'routes', fields: ['name', 'theme', 'stations', 'stops', 'price', 'status', 'trips'] },
+  pushes: { table: 'pushes', fields: ['title', 'type', 'audience', 'status', 'reach', 'ctr', 'send_at'] },
+};
+const pick = (fields, body) => Object.fromEntries(fields.filter(f => body[f] !== undefined).map(f => [f, body[f]]));
+const touch = (cfg, id) => { if (cfg.touch) db.prepare(`UPDATE ${cfg.table} SET ${cfg.touch}=date('now') WHERE id=?`).run(id); };
+
+for (const [res, cfg] of Object.entries(RESOURCES)) {
+  app.post(`/api/${res}`, requireAuth('admin'), (req, resp) => {
+    const data = pick(cfg.fields, req.body || {});
+    const cols = Object.keys(data);
+    if (!cols.length) return resp.status(400).json({ error: '缺少字段' });
+    const info = db.prepare(`INSERT INTO ${cfg.table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).run(...cols.map(c => data[c]));
+    touch(cfg, info.lastInsertRowid);
+    resp.json(db.prepare(`SELECT * FROM ${cfg.table} WHERE id=?`).get(info.lastInsertRowid));
+  });
+  app.put(`/api/${res}/:id`, requireAuth('admin'), (req, resp) => {
+    const data = pick(cfg.fields, req.body || {});
+    const cols = Object.keys(data);
+    if (cols.length) db.prepare(`UPDATE ${cfg.table} SET ${cols.map(c => c + '=?').join(',')} WHERE id=?`).run(...cols.map(c => data[c]), req.params.id);
+    touch(cfg, req.params.id);
+    resp.json(db.prepare(`SELECT * FROM ${cfg.table} WHERE id=?`).get(req.params.id));
+  });
+  app.delete(`/api/${res}/:id`, requireAuth('admin'), (req, resp) => {
+    db.prepare(`DELETE FROM ${cfg.table} WHERE id=?`).run(req.params.id);
+    resp.json({ ok: true });
+  });
+}
+
 // 数据看板：部分指标实时从库里算（如知识库待审数），其余为运营指标
 app.get('/api/dashboard', (req, res) => {
   const kbPending = db.prepare(`SELECT COUNT(*) n FROM kb WHERE audit_status='待审核'`).get().n;

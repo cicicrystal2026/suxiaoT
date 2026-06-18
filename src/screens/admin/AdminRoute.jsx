@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Admin, AStat, AIcon } from '../../components/admin';
-import { getJSON, patchJSON } from '../../lib/api';
+import { useState } from 'react';
+import { Admin, AStat, AIcon, EditModal } from '../../components/admin';
+import { useCrud } from '../../lib/useCrud';
 
 const FALLBACK = [
   { id: 1, name: '樱花专列', theme: '春樱', stations: '龙康路 · 文昌路 · 秀岸 · 何山桥 · 长江路 · 西洋山', stops: 6, price: '¥4 起', status: '上架', trips: '9,284' },
@@ -10,28 +10,40 @@ const FALLBACK = [
   { id: 5, name: '夏荷骑行线', theme: '夏荷', stations: '秀岸 · 太湖湿地 · 贡山岛', stops: 3, price: '¥30 起', status: '待上架', trips: '—' },
 ];
 
+const FIELDS = [
+  { key: 'name', label: '专线名称', width: 'full' },
+  { key: 'theme', label: '主题', type: 'select', options: ['春樱', '夏荷', '秋桂', '通用'] },
+  { key: 'stations', label: '途经站点', type: 'textarea', width: 'full', placeholder: '狮子山 · 龙康路 · 秀岸 …' },
+  { key: 'stops', label: '站数', type: 'number' },
+  { key: 'price', label: '票价/套票', placeholder: '¥4 起' },
+  { key: 'status', label: '状态', type: 'select', options: ['上架', '待上架'] },
+  { key: 'trips', label: '带动出行', placeholder: '9,284 或 —' },
+];
+
 const themeColor = (t) => (t === '春樱' ? 'pink' : t === '夏荷' || t === '秋桂' ? 'sun' : 'gray');
 
 export default function AdminRoute() {
-  const [rows, setRows] = useState(FALLBACK);
-  const [live, setLive] = useState(false);
-  const [busyId, setBusyId] = useState(null);
+  const { rows, live, create, update, remove } = useCrud('routes', FALLBACK);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    getJSON('/api/routes').then((d) => { if (Array.isArray(d) && d.length) { setRows(d); setLive(true); } }).catch(() => {});
-  }, []);
-
-  const toggle = async (r) => {
-    const next = r.status === '上架' ? '待上架' : '上架';
-    setBusyId(r.id);
-    setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, status: next } : x)));
-    try { const u = await patchJSON(`/api/routes/${r.id}`, { status: next }); setRows((rs) => rs.map((x) => (x.id === r.id ? u : x))); } catch {}
-    finally { setBusyId(null); }
+  const save = async (form) => {
+    setSaving(true);
+    try {
+      if (editing.id) await update(editing.id, form);
+      else await create(form);
+      setEditing(null);
+    } catch (e) { alert(e.message); } finally { setSaving(false); }
   };
+  const toggle = (r) => {
+    const next = r.status === '上架' ? '待上架' : '上架';
+    update(r.id, { status: next }).catch((e) => alert(e.message));
+  };
+  const del = (r) => { if (confirm(`确认删除「${r.name}」？`)) remove(r.id).catch((e) => alert(e.message)); };
 
   return (
     <Admin active="route" crumb="内容运营 / 文旅专线" title="文旅专线管理"
-      actions={<button className="adm-btn primary"><AIcon n="plus" s={15} c="#fff" />新建专线</button>}>
+      actions={<button className="adm-btn primary" onClick={() => setEditing({})}><AIcon n="plus" s={15} c="#fff" />新建专线</button>}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--blue-soft)', border: '1px solid #CFE0F5', borderRadius: 12, padding: '11px 15px', marginBottom: 16 }}>
         <AIcon n="route" s={18} c="var(--blue)" />
         <span style={{ fontSize: 12.5, fontWeight: 800, color: '#345C99' }}>专线聚焦一号线、二号线沿线，关联景点 / 商户 / 券 / 一键导航。配置后实时同步 C 端「文旅专线」。</span>
@@ -58,11 +70,12 @@ export default function AdminRoute() {
                 <td><span className={'adm-pill ' + (r.status === '上架' ? 'green' : 'sun')}>{r.status === '上架' && '● '}{r.status}</span></td>
                 <td style={{ fontWeight: 800 }}>{r.trips}</td>
                 <td>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--ink-3)', opacity: busyId === r.id ? 0.5 : 1 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--ink-3)' }}>
                     {r.status === '上架'
                       ? <span className="adm-pill gray" style={{ cursor: 'pointer' }} onClick={() => toggle(r)}>下架</span>
                       : <span className="adm-pill green" style={{ cursor: 'pointer' }} onClick={() => toggle(r)}>上架</span>}
-                    <AIcon n="edit" s={17} c="var(--blue)" /><AIcon n="trash" s={17} c="var(--rose)" />
+                    <span onClick={() => setEditing(r)} style={{ cursor: 'pointer' }}><AIcon n="edit" s={17} c="var(--blue)" /></span>
+                    <span onClick={() => del(r)} style={{ cursor: 'pointer' }}><AIcon n="trash" s={17} c="var(--rose)" /></span>
                   </div>
                 </td>
               </tr>
@@ -70,6 +83,8 @@ export default function AdminRoute() {
           </tbody>
         </table>
       </div>
+
+      {editing && <EditModal title={editing.id ? '编辑专线' : '新建专线'} fields={FIELDS} value={editing} saving={saving} onSave={save} onClose={() => setEditing(null)} />}
     </Admin>
   );
 }
