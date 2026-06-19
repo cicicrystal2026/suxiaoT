@@ -84,12 +84,11 @@ src/
 
 ## 部署
 
-- **前端**：`npm run build` 产物在 `dist/`，可托管到任意静态服务（已配 GitHub Pages 自动部署，见 `.github/workflows/deploy.yml`）。
-- **后端**：需要一个能跑 Node 的主机（Render / Railway / 云服务器等）。设好环境变量后 `npm run start`。
-- **前后端分离时**：给前端设 `VITE_API_BASE=https://你的后端域名` 再构建，让它指向后端。
-- **单机托管**：后端会自动托管 `dist/`（用 `VITE_BASE=/` 重新构建即可从根路径访问）。
+👉 **完整部署步骤见 [DEPLOY.md](./DEPLOY.md)**（Render 一键蓝图 / Railway / Docker / 裸 Node 四种方案）。
 
-> ⚠️ GitHub Pages 是纯静态，跑不了后端——线上的 Pages 站点只展示界面，AI 与数据库需要后端单独部署。
+一句话：本项目是**单个 Node 服务**——`docker build` 后运行，它会同时托管 API、AI、数据库和前端页面，一个网址访问完整应用。仓库已附 `Dockerfile`、`render.yaml`。
+
+> ⚠️ GitHub Pages（`.github/workflows/deploy.yml`）只发布**纯前端**到 `https://cicicrystal2026.github.io/suxiaoT/`，仅供看界面；AI / 登录 / 数据需要按 DEPLOY.md 部署带后端的版本。
 
 ---
 

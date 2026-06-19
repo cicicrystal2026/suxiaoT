@@ -6,7 +6,8 @@ import { dirname, join } from 'node:path';
 import { hashPassword } from './auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database(join(__dirname, 'data.db'));
+// DB_PATH 可指向挂载的持久化磁盘（如 /data/data.db）；默认放在 server 目录
+const db = new Database(process.env.DB_PATH || join(__dirname, 'data.db'));
 db.pragma('journal_mode = WAL');
 
 db.exec(`
