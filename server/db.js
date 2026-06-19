@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS accounts (
   phone TEXT UNIQUE NOT NULL, name TEXT, realname TEXT DEFAULT '未实名',
   points INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS user_coupons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL, coupon_id INTEGER NOT NULL,
+  used INTEGER DEFAULT 0, claimed_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(account_id, coupon_id)
+);
+CREATE TABLE IF NOT EXISTS redemptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL, goods_id INTEGER, goods_name TEXT,
+  points_spent INTEGER, created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS stamps (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL, station TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(account_id, station)
+);
 `);
 
 // 轻量迁移：给已存在的旧表补列（老版本 coupons 没有 code/merchant/status）

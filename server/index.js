@@ -43,8 +43,8 @@ app.post('/api/auth/login', (req, res) => {
   if (!checkCode(phone, code)) return res.status(401).json({ error: '验证码错误或已过期' });
   let acc = db.prepare(`SELECT * FROM accounts WHERE phone=?`).get(phone);
   if (!acc) {
-    const info = db.prepare(`INSERT INTO accounts (phone,name,realname) VALUES (?,?,?)`)
-      .run(phone, name || '苏州出行用户', name ? '已实名' : '未实名');
+    const info = db.prepare(`INSERT INTO accounts (phone,name,realname,points) VALUES (?,?,?,?)`)
+      .run(phone, name || '苏州出行用户', name ? '已实名' : '未实名', 1280); // 新会员赠送 1280 积分
     acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(info.lastInsertRowid);
   } else if (name) {
     db.prepare(`UPDATE accounts SET name=?, realname='已实名' WHERE id=?`).run(name, acc.id);
@@ -62,6 +62,73 @@ app.get('/api/auth/me', requireAuth(), (req, res) => {
   }
   const acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(req.user.sub);
   res.json(acc ? { ...acc, role: 'member' } : null);
+});
+
+// ---- 会员业务写操作（需登录）----
+const memberAuth = requireAuth('member');
+
+// 我的汇总（积分 / 持券 / 集章 / 兑换）
+app.get('/api/me/summary', memberAuth, (req, res) => {
+  const uid = req.user.sub;
+  const acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(uid);
+  const coupons = db.prepare(`SELECT COUNT(*) n FROM user_coupons WHERE account_id=?`).get(uid).n;
+  const stamps = db.prepare(`SELECT COUNT(*) n FROM stamps WHERE account_id=?`).get(uid).n;
+  const redemptions = db.prepare(`SELECT COUNT(*) n FROM redemptions WHERE account_id=?`).get(uid).n;
+  res.json({ points: acc?.points ?? 0, coupons, stamps, redemptions, name: acc?.name, realname: acc?.realname });
+});
+
+// 领券
+app.post('/api/coupons/:id/claim', memberAuth, (req, res) => {
+  const uid = req.user.sub;
+  const c = db.prepare(`SELECT * FROM coupons WHERE id=?`).get(req.params.id);
+  if (!c) return res.status(404).json({ error: '券不存在' });
+  if (c.status !== '进行中') return res.status(400).json({ error: '该券暂不可领' });
+  const unlimited = c.total >= 999999;
+  if (!unlimited && c.total - c.claimed <= 0) return res.status(400).json({ error: '已被抢光' });
+  const dup = db.prepare(`SELECT 1 FROM user_coupons WHERE account_id=? AND coupon_id=?`).get(uid, c.id);
+  if (dup) return res.status(400).json({ error: '你已领取过该券' });
+  db.prepare(`INSERT INTO user_coupons (account_id, coupon_id) VALUES (?,?)`).run(uid, c.id);
+  db.prepare(`UPDATE coupons SET claimed=claimed+1 WHERE id=?`).run(c.id);
+  res.json({ ok: true, coupon: db.prepare(`SELECT * FROM coupons WHERE id=?`).get(c.id) });
+});
+
+// 我的券包
+app.get('/api/me/coupons', memberAuth, (req, res) => {
+  const rows = db.prepare(`SELECT c.*, uc.used, uc.claimed_at FROM user_coupons uc JOIN coupons c ON c.id=uc.coupon_id WHERE uc.account_id=? ORDER BY uc.claimed_at DESC`).all(req.user.sub);
+  res.json(rows);
+});
+
+// 兑换积分商品
+app.post('/api/points/redeem/:goodsId', memberAuth, (req, res) => {
+  const uid = req.user.sub;
+  const g = db.prepare(`SELECT * FROM points_goods WHERE id=?`).get(req.params.goodsId);
+  if (!g) return res.status(404).json({ error: '商品不存在' });
+  const acc = db.prepare(`SELECT * FROM accounts WHERE id=?`).get(uid);
+  if (acc.points < g.points) return res.status(400).json({ error: `积分不足，还差 ${g.points - acc.points} 分` });
+  db.prepare(`UPDATE accounts SET points=points-? WHERE id=?`).run(g.points, uid);
+  db.prepare(`INSERT INTO redemptions (account_id, goods_id, goods_name, points_spent) VALUES (?,?,?,?)`).run(uid, g.id, g.name, g.points);
+  res.json({ ok: true, balance: acc.points - g.points, goods: g.name });
+});
+
+// 集章打卡（同一站点幂等）
+app.post('/api/stamps/:station/collect', memberAuth, (req, res) => {
+  const uid = req.user.sub;
+  const station = decodeURIComponent(req.params.station);
+  const exists = db.prepare(`SELECT 1 FROM stamps WHERE account_id=? AND station=?`).get(uid, station);
+  let awarded = 0;
+  if (!exists) {
+    db.prepare(`INSERT INTO stamps (account_id, station) VALUES (?,?)`).run(uid, station);
+    db.prepare(`UPDATE accounts SET points=points+10 WHERE id=?`).run(uid); // 集章奖励 +10
+    awarded = 10;
+  }
+  const count = db.prepare(`SELECT COUNT(*) n FROM stamps WHERE account_id=?`).get(uid).n;
+  res.json({ ok: true, count, awarded, already: !!exists });
+});
+
+// 我的集章
+app.get('/api/me/stamps', memberAuth, (req, res) => {
+  const rows = db.prepare(`SELECT station, created_at FROM stamps WHERE account_id=? ORDER BY created_at`).all(req.user.sub);
+  res.json({ count: rows.length, stations: rows.map(r => r.station) });
 });
 
 // ---- 业务数据（读）----

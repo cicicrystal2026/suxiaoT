@@ -9,19 +9,21 @@ const MASCOT = import.meta.env.BASE_URL + 'assets/suxiaot-sm.png';
 export default function Profile() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
+  const [sum, setSum] = useState(null);
   const loggedIn = !!currentUser();
 
   useEffect(() => {
     if (!loggedIn) return;
     getJSON('/api/auth/me').then(setMe).catch(() => {});
+    getJSON('/api/me/summary').then(setSum).catch(() => {});
   }, [loggedIn]);
 
   const groups = [
     [['bell', '我的订阅', '通勤路线·活动提醒', 'var(--sakura-deep)', 'var(--sakura-soft)'],
      ['heart', '我的收藏', '景点·路线·攻略', '#4A78C9', '#E7EEFA'],
-     ['coupon', '我的优惠券', '3张可用', '#C58A2E', 'var(--sun-soft)']],
-    [['scan', '打卡集章', '3/6 · 狮子山站', 'var(--sakura-deep)', 'var(--sakura-soft)'],
-     ['gift', '兑换记录', '已兑换 2 件', 'var(--leaf-deep)', 'var(--leaf-soft)'],
+     ['coupon', '我的优惠券', `${sum?.coupons ?? 0} 张可用`, '#C58A2E', 'var(--sun-soft)']],
+    [['scan', '打卡集章', `已集 ${sum?.stamps ?? 0} 个`, 'var(--sakura-deep)', 'var(--sakura-soft)'],
+     ['gift', '兑换记录', `已兑换 ${sum?.redemptions ?? 0} 件`, 'var(--leaf-deep)', 'var(--leaf-soft)'],
      ['headset', '帮助与客服', '7×24在线', '#4A78C9', '#E7EEFA']],
   ];
 
@@ -48,7 +50,7 @@ export default function Profile() {
         <Icon n="chevR" s={18} c="var(--ink-3)" />
       </div>
       <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-        {[['出行', '86', '次'], ['打卡', '12', '个'], ['积分', me?.points != null ? String(me.points) : '1,280', '分']].map((s, i) => (
+        {[['集章', sum?.stamps != null ? String(sum.stamps) : '0', '个'], ['持券', sum?.coupons != null ? String(sum.coupons) : '0', '张'], ['积分', sum?.points != null ? sum.points.toLocaleString() : '1,280', '分']].map((s, i) => (
           <div key={i} className="sx-card" style={{ flex: 1, padding: '11px 0', textAlign: 'center' }}>
             <div className="sx-display" style={{ fontSize: 20, color: 'var(--ink)' }}>{s[1]}<span style={{ fontSize: 11, color: 'var(--ink-3)' }}> {s[2]}</span></div>
             <div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 800, marginTop: 1 }}>{s[0]}</div>
