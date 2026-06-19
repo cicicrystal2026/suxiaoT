@@ -14,11 +14,11 @@
 
 1. 把代码推到 GitHub（已完成：`cicicrystal2026/suxiaoT`）。
 2. 打开 https://render.com → 注册/登录 → **New +** → **Blueprint**。
-3. 选择本仓库，Render 会自动读取根目录的 `render.yaml`。
-4. 在环境变量里填入 **`DEEPSEEK_API_KEY`**（`AUTH_SECRET` 会自动生成）。
-5. 点 **Apply / Create**，等待构建（Docker 多阶段，约 3-5 分钟）。
+3. 选择本仓库，Render 会自动读取根目录的 `render.yaml`（原生 Node：`npm ci && npm run build` → `node server/index.js`）。
+4. 在环境变量里填入 **`DEEPSEEK_API_KEY`**（`AUTH_SECRET` 会自动生成，`VITE_BASE` / `NODE_VERSION` 已在蓝图里设好）。
+5. 点 **Apply / Create**，等待构建（约 3-5 分钟）。
 6. 完成后会得到一个 `https://suxiaot-xxxx.onrender.com` 地址——直接打开即是完整应用。
-   - 健康检查：`/api/health` 应返回 `provider: deepseek`。
+   - 健康检查：`/api/health` 应返回 `provider: deepseek`、`hasKey: true`。
    - 后台：`/admin`，账号 `operator@sztram` / `sztram2026`（请尽快改密码）。
 
 > Render 免费实例闲置会休眠，首次访问需冷启动几十秒，属正常。

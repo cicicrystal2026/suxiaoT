@@ -1,15 +1,23 @@
-# Render 一键部署蓝图：https://render.com → New → Blueprint → 选本仓库
+# Render 一键部署蓝图（原生 Node，部署成功率最高）
+# 用法：render.com → New + → Blueprint → 选本仓库 → 填 DEEPSEEK_API_KEY → Apply
 services:
   - type: web
     name: suxiaot
-    runtime: docker
+    runtime: node
     plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node server/index.js
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
-      - key: DEEPSEEK_API_KEY    # 在 Render 控制台填入你的真实密钥
+      - key: NODE_VERSION
+        value: "20"
+      - key: VITE_BASE          # 前端按根路径构建（单服务托管）
+        value: /
+      - key: DEEPSEEK_API_KEY   # ← 在 Render 控制台填入你的真实密钥
         sync: false
-      - key: AUTH_SECRET         # 自动生成一个随机强密钥
+      - key: AUTH_SECRET        # 自动生成随机强密钥
         generateValue: true
-      # 如需数据持久化（付费磁盘），取消下面注释并在服务里挂载 /data 磁盘
+      # 数据持久化（可选，需付费磁盘）：挂一块盘到 /data 再取消下面注释
       # - key: DB_PATH
       #   value: /data/data.db
