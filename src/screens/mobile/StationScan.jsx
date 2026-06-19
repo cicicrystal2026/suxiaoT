@@ -1,4 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Icon, Phone, Header, Mascot } from '../../components';
+import { getJSON } from '../../lib/api';
+
+const STATION = '狮子山站';
 
 export default function StationScan() {
   const svcs = [
@@ -6,6 +10,16 @@ export default function StationScan() {
     { n: 'camera', t: 'AI合影',   d: '和苏小T拍照',  c: 'var(--leaf-deep)',   cb: 'var(--leaf-soft)' },
     { n: 'search', t: '文旅资讯', d: '周边吃喝玩',   c: '#C58A2E',            cb: 'var(--sun-soft)' },
   ];
+  const [arr, setArr] = useState({ towards: '西洋山', etaMin: 5, etaClock: '09:46', status: '畅通' });
+  useEffect(() => {
+    let alive = true;
+    const load = () => getJSON(`/api/arrivals?station=${encodeURIComponent(STATION)}`)
+      .then((d) => { const dir = d?.directions?.[0]; if (alive && dir) setArr({ towards: dir.towards, ...dir.primary }); })
+      .catch(() => {});
+    load();
+    const t = setInterval(load, 10000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
   return (
     <Phone head={<Header title="站台服务" sub="扫码即用 · 无需下载" right={<Icon n="pin" s={20}/>}/>} brandProps={{ label: '本站有啥好玩？问苏小T' }}>
       <div style={{ marginTop: 2, borderRadius: 20, padding: '15px 17px', background: 'linear-gradient(120deg,var(--ink),#33446e)', position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow)' }}>
@@ -16,8 +30,8 @@ export default function StationScan() {
       </div>
       <div className="sx-card" style={{ marginTop: 12, padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <Icon n="tram" s={24} c="var(--sakura-deep)"/>
-        <div style={{ flex: 1 }}><div style={{ fontWeight: 800, fontSize: 14 }}>下一班 往西洋山</div><div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 700 }}>畅通 · 预计 09:46 到站</div></div>
-        <div style={{ textAlign: 'right' }}><span className="sx-display" style={{ fontSize: 26, color: 'var(--sakura-deep)' }}>5</span><span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)' }}> 分</span></div>
+        <div style={{ flex: 1 }}><div style={{ fontWeight: 800, fontSize: 14 }}>下一班 往{arr.towards}</div><div style={{ fontSize: 11, color: 'var(--ink-3)', fontWeight: 700 }}>{arr.status} · 预计 {arr.etaClock} 到站</div></div>
+        <div style={{ textAlign: 'right' }}><span className="sx-display" style={{ fontSize: 26, color: 'var(--sakura-deep)' }}>{arr.etaMin}</span><span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink-2)' }}> 分</span></div>
       </div>
       <div className="sx-sect" style={{ fontSize: 14, margin: '15px 0 9px' }}>本站服务</div>
       <div style={{ display: 'flex', gap: 10 }}>

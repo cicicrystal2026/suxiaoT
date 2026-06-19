@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import db from './db.js';
 import { streamCompletion, hasProvider, MODEL, PROVIDER_NAME } from './llm.js';
 import { signToken, verifyToken, verifyPassword, requireAuth, genCode, checkCode } from './auth.js';
+import { getArrivals } from './arrivals.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -129,6 +130,15 @@ app.post('/api/stamps/:station/collect', memberAuth, (req, res) => {
 app.get('/api/me/stamps', memberAuth, (req, res) => {
   const rows = db.prepare(`SELECT station, created_at FROM stamps WHERE account_id=? ORDER BY created_at`).all(req.user.sub);
   res.json({ count: rows.length, stations: rows.map(r => r.station) });
+});
+
+// ---- 实时到站 ----
+app.get('/api/arrivals', async (req, res) => {
+  try {
+    res.json(await getArrivals(req.query.station || '秀岸站', req.query.line || '1号线'));
+  } catch (e) {
+    res.status(503).json({ error: e.message });
+  }
 });
 
 // ---- 业务数据（读）----
